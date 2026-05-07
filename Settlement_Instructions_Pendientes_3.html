@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<title>Settlement Instructions · Pendientes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#ffffff;             /* texto principal: blanco */
+    --ink-soft:#b8c5e0;         /* texto secundario: blanco azulado */
+    --paper:#040d24;            /* fondo principal: azul muy profundo */
+    --paper-soft:#0a1a3d;       /* fondo de paneles */
+    --rule:#ffd84a;             /* línea fuerte: amarillo */
+    --rule-soft:#1d3470;        /* línea suave: azul medio */
+    --accent:#ffd84a;           /* acento: amarillo */
+    --accent-soft:#ffe680;      /* amarillo claro */
+    --pos:#ffe680;              /* positivos: amarillo claro */
+    --neg:#ffffff;              /* negativos: blanco (subrayado) */
+    --muted:#6b7da3;            /* atenuado: azul pálido */
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:"Inter Tight",sans-serif;-webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 1,"ss01" 1}
+  .frame{max-width:1480px;margin:0 auto;padding:48px 56px 80px}
+
+  /* MASTHEAD */
+  .masthead{border-top:3px solid var(--rule);border-bottom:1px solid var(--rule);padding:14px 0 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
+  .masthead .left{display:flex;flex-direction:column;gap:4px}
+  .eyebrow{font-family:"Inter Tight",sans-serif;font-weight:600;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .title{font-family:"Inter Tight",sans-serif;font-weight:800;font-size:46px;line-height:1;letter-spacing:.01em;margin:0;text-transform:uppercase}
+  .title em{font-style:normal;font-weight:800;color:var(--accent)}
+  .meta{font-family:"Inter Tight",sans-serif;font-weight:500;font-size:12px;color:var(--ink-soft);text-align:right;line-height:1.6;letter-spacing:.02em}
+  .meta b{color:var(--ink);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+
+  /* DROP ZONE */
+  .upload{margin:28px 0 32px;border:1.5px dashed var(--rule);background:var(--paper-soft);padding:22px 26px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;transition:.18s}
+  .upload.drag{background:#0e2350;border-color:var(--accent);border-style:solid}
+  .upload .info{font-family:"Inter Tight",sans-serif;font-weight:500;font-size:12px;color:var(--ink-soft);line-height:1.6;letter-spacing:.01em}
+  .upload .info b{color:var(--ink);font-weight:700}
+  .upload .actions{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{font-family:"Inter Tight",sans-serif;font-weight:700;font-size:13px;letter-spacing:.02em;padding:11px 18px;border:1.5px solid var(--accent);background:var(--accent);color:#040d24;cursor:pointer;transition:.15s;text-transform:uppercase}
+  .btn:hover{background:#ffffff;border-color:#ffffff;color:#040d24}
+  .btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink)}
+  .btn.ghost:hover{background:var(--ink);color:#040d24}
+  .btn.ghost.accent:hover{background:var(--accent);border-color:var(--accent);color:#040d24}
+
+  /* SECTION HEADERS */
+  .section-head{display:flex;align-items:baseline;gap:14px;margin:36px 0 14px;border-bottom:1px solid var(--rule);padding-bottom:8px}
+  .section-head h2{font-family:"Inter Tight",sans-serif;font-weight:700;font-size:20px;letter-spacing:.04em;margin:0;text-transform:uppercase}
+  .section-head .num{font-family:"Inter Tight",sans-serif;font-weight:700;font-size:11px;color:var(--accent);letter-spacing:.18em}
+  .section-head .hint{margin-left:auto;font-family:"Inter Tight",sans-serif;font-weight:500;font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+
+  /* KPIs */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin:0 0 8px}
+  .kpi{padding:16px 18px;border-right:1px solid var(--rule-soft)}
+  .kpi:last-child{border-right:none}
+  .kpi .k-label{font-family:"Inter Tight",sans-serif;font-weight:600;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .kpi .k-value{font-family:"Inter Tight",sans-serif;font-size:34px;font-weight:800;letter-spacing:-.01em;line-height:1}
+  .kpi .k-sub{font-family:"Inter Tight",sans-serif;font-weight:500;font-size:11px;color:var(--ink-soft);margin-top:6px;letter-spacing:.02em}
+
+  /* PIVOT TABLE */
+  .pivot-wrap{overflow-x:auto;border:1px solid var(--accent);background:#0c317010}
+  table.pivot{width:100%;border-collapse:collapse;font-family:"Inter Tight",sans-serif;font-size:12px;font-weight:500}
+  table.pivot thead th{position:sticky;top:0;background:var(--accent);color:#040d24;font-weight:700;text-align:right;padding:11px 12px;border-right:1px solid #d4b220;white-space:nowrap;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}
+  table.pivot thead th:first-child{text-align:left;background:var(--accent);min-width:200px;position:sticky;left:0;z-index:3}
+  table.pivot tbody td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--rule-soft);border-right:1px solid #1f4894;white-space:nowrap;color:var(--ink)}
+  table.pivot tbody td:first-child{text-align:left;font-family:"Inter Tight",sans-serif;font-weight:600;background:var(--paper-soft);position:sticky;left:0;z-index:2;border-right:1px solid var(--accent);color:var(--accent)}
+  table.pivot tbody tr:hover td{background:#0e2350}
+  table.pivot tbody tr:hover td:first-child{background:#15306a;color:#fff}
+  table.pivot tbody tr.total td{background:var(--accent) !important;color:#040d24;font-weight:700;border-top:2px solid var(--accent)}
+  table.pivot tbody tr.total td:first-child{background:var(--accent) !important;color:#040d24}
+  table.pivot td.zero{color:#3a4d75}
+  table.pivot td.pos{color:var(--pos);font-weight:500}
+  table.pivot td.neg{color:#ffffff;font-weight:600;text-decoration:underline;text-decoration-color:#ff8a8a;text-underline-offset:3px}
+  table.pivot tfoot td{padding:9px 12px;text-align:right;background:var(--paper-soft);font-weight:600;border-top:2px solid var(--accent);border-right:1px solid var(--rule-soft)}
+  table.pivot tfoot td:first-child{text-align:left;background:var(--accent);color:#040d24;font-family:"Inter Tight",sans-serif}
+
+  /* DETAIL TABLE */
+  .detail-wrap{overflow-x:auto;border:1px solid var(--accent);background:var(--paper-soft);margin-top:8px}
+  table.detail{width:100%;border-collapse:collapse;font-family:"Inter Tight",sans-serif;font-size:12px;color:var(--ink);font-weight:500}
+  table.detail thead th{background:var(--paper);color:var(--accent);font-weight:700;text-align:left;padding:11px 12px;border-bottom:2px solid var(--accent);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+  table.detail tbody td{padding:8px 12px;border-bottom:1px solid var(--rule-soft);white-space:nowrap;vertical-align:top;color:var(--ink)}
+  table.detail tbody tr:hover td{background:#0e2350}
+  table.detail .num{text-align:right}
+  table.detail .num.neg{color:#ffffff;font-weight:700;text-decoration:underline;text-decoration-color:#ff8a8a;text-underline-offset:3px}
+  table.detail .num.pos{color:var(--accent);font-weight:600}
+  table.detail .pill{display:inline-block;padding:3px 9px;font-size:10px;border:1px solid var(--ink);background:transparent;border-radius:0;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--ink)}
+  table.detail .pill.payin{border-color:var(--accent);color:var(--accent)}
+  table.detail .pill.payout{border-color:#ffffff;color:#ffffff;background:#15306a}
+  table.detail .pill.state-pm{background:var(--accent);border-color:var(--accent);color:#040d24}
+  table.detail .pill.state-ps{background:transparent;border-color:#ffffff;color:#ffffff}
+  table.detail .reason-c{color:var(--accent);font-weight:600}
+  table.detail th.action-col,table.detail td.action-col{text-align:center;width:48px}
+  table.detail .btn-del{background:transparent;border:1px solid var(--rule-soft);color:var(--ink-soft);font-family:"Inter Tight",sans-serif;font-size:13px;font-weight:700;width:26px;height:26px;line-height:1;cursor:pointer;border-radius:0;transition:.12s;padding:0}
+  table.detail .btn-del:hover{background:#ff4d4d;border-color:#ff4d4d;color:#fff}
+  table.detail tr.fade-out td{opacity:0;transition:opacity .18s ease,background .18s ease;background:#ff4d4d33 !important}
+  .elim-badge{display:inline-block;padding:2px 8px;background:#ff4d4d;color:#fff;font-weight:700;letter-spacing:.08em;border-radius:0;text-transform:uppercase}
+
+  /* FILTERS */
+  .filters{display:flex;gap:8px;align-items:center;margin:14px 0 8px;flex-wrap:wrap;font-family:"Inter Tight",sans-serif;font-weight:500;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+  .filters label{display:flex;align-items:center;gap:6px;color:var(--ink-soft)}
+  .filters select,.filters input{font-family:"Inter Tight",sans-serif;font-weight:500;font-size:11px;padding:6px 9px;border:1px solid var(--accent);background:var(--paper-soft);color:var(--ink);text-transform:none;letter-spacing:.02em}
+  .filters select option{background:var(--paper);color:var(--ink)}
+  .filters input{width:200px}
+
+  /* FOOTNOTE */
+  .footnote{margin-top:48px;padding-top:18px;border-top:1px solid var(--rule);font-family:"Inter Tight",sans-serif;font-weight:500;font-size:11px;color:var(--muted);line-height:1.7;display:grid;grid-template-columns:repeat(2,1fr);gap:24px;letter-spacing:.01em}
+  .footnote h3{font-family:"Inter Tight",sans-serif;font-weight:700;font-size:11px;color:var(--accent);margin:0 0 10px;letter-spacing:.14em;text-transform:uppercase}
+  .footnote ol{padding-left:18px;margin:0}
+  .footnote li{margin-bottom:3px}
+
+  .empty{padding:60px 20px;text-align:center;color:var(--muted);font-family:"Inter Tight",sans-serif;font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;border:1px dashed var(--rule-soft);background:var(--paper-soft)}
+
+  /* PRINT */
+  @media print{
+    body{background:#040d24;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .upload,.filters,.btn{display:none !important}
+    .frame{padding:18px}
+    table.pivot thead th{background:#ffd84a;color:#040d24;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+
+  @media (max-width:900px){
+    .frame{padding:24px 18px 60px}
+    .title{font-size:38px}
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .kpi{border-right:1px solid var(--rule-soft);border-bottom:1px solid var(--rule-soft)}
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <header class="masthead">
+    <div class="left">
+      <span class="eyebrow">Reporte operativo · Mesa de liquidaciones</span>
+      <h1 class="title">Settlement <em>Pendientes</em></h1>
+    </div>
+    <div class="meta">
+      <div>Generado · <b id="meta-now">—</b></div>
+      <div>Origen · <b id="meta-src">— sin archivo —</b></div>
+      <div>Filas crudas · <b id="meta-raw">0</b> &nbsp; · &nbsp; Pendientes · <b id="meta-pend">0</b></div>
+    </div>
+  </header>
+
+  <div class="upload" id="dropzone">
+    <div class="info">
+      <b>Cargá el CSV de Settlement Instructions.</b><br>
+      Aplica la misma lógica de la macro: <b>PAYOUT × −1</b> en Net Quantity, descarta <b>CLOSED</b> y <b>POOLED</b>, y arma la tabla dinámica <b>Reason × Asset</b>.
+    </div>
+    <div class="actions">
+      <input type="file" id="file" accept=".csv,text/csv" hidden>
+      <button class="btn" onclick="document.getElementById('file').click()">Elegir CSV</button>
+      <button class="btn ghost" onclick="cargarPortapapeles()">Pegar desde portapapeles</button>
+      <button class="btn ghost accent" onclick="window.print()">Imprimir / PDF</button>
+    </div>
+  </div>
+
+  <div id="content">
+    <div class="empty">Esperando un archivo CSV para procesar…</div>
+  </div>
+
+  <footer class="footnote">
+    <div>
+      <h3>Lógica replicada de la macro</h3>
+      <ol>
+        <li>Lee el CSV y normaliza el formato numérico.</li>
+        <li>Si <b>Asset Direction = PAYOUT</b>, multiplica <b>Net Quantity</b> por −1.</li>
+        <li>Elimina filas con <b>State = CLOSED</b> o <b>POOLED</b>.</li>
+        <li>Arma tabla dinámica: filas <b>Reason</b>, columnas <b>Asset</b>, valor <b>Σ Net Quantity</b>.</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Convenciones</h3>
+      <ol>
+        <li>Valores en formato es-AR (separador de miles, dos decimales).</li>
+        <li>Negativos en rojo (PAYOUT) · positivos en verde (PAYIN).</li>
+        <li>Ceros atenuados para facilitar la lectura de la matriz.</li>
+        <li>El procesamiento ocurre 100 % en el navegador. Nada se sube.</li>
+      </ol>
+    </div>
+  </footer>
+</div>
+
+<script>
+/* =========================================================================
+   PARSER CSV (RFC-4180, soporta comillas, comas internas, saltos de línea)
+   ========================================================================= */
+function parseCSV(text){
+  if(text.charCodeAt(0)===0xFEFF) text = text.slice(1); // BOM
+  const rows=[]; let row=[]; let cur=""; let q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){
+        if(text[i+1]==='"'){cur+='"';i++;}
+        else q=false;
+      } else cur+=c;
+    } else {
+      if(c==='"') q=true;
+      else if(c===','){row.push(cur);cur="";}
+      else if(c==='\r'){ /* skip */ }
+      else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur="";}
+      else cur+=c;
+    }
+  }
+  if(cur.length>0||row.length>0){row.push(cur);rows.push(row);}
+  // descartar filas vacías
+  return rows.filter(r=>r.length>1 || (r.length===1 && r[0].trim()!==""));
+}
+
+/* =========================================================================
+   FORMATEO NUMÉRICO es-AR
+   ========================================================================= */
+const fmt = new Intl.NumberFormat('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtInt = new Intl.NumberFormat('es-AR',{maximumFractionDigits:0});
+function fnum(n){
+  if(n===0||n===null||n===undefined||Number.isNaN(n)) return "0,00";
+  return fmt.format(n);
+}
+function fnumCell(n){
+  if(n===0) return `<td class="zero">0,00</td>`;
+  const cls = n<0 ? 'neg' : 'pos';
+  return `<td class="${cls}">${fmt.format(n)}</td>`;
+}
+
+/* =========================================================================
+   PROCESAMIENTO PRINCIPAL  (replica la macro VBA)
+   ========================================================================= */
+function procesar(csvText, sourceLabel){
+  const rows = parseCSV(csvText);
+  if(rows.length<2){ render({error:"El CSV no contiene datos."}); return; }
+  const headers = rows[0].map(h=>h.trim());
+  const idx = {};
+  headers.forEach((h,i)=>idx[h]=i);
+
+  const need = ['State','Asset Direction','Net Quantity','Asset','Reason'];
+  const miss = need.filter(c=>!(c in idx));
+  if(miss.length){ render({error:"Faltan columnas en el CSV: "+miss.join(", ")}); return; }
+
+  const data = rows.slice(1).map(r=>{
+    const obj = {};
+    headers.forEach((h,i)=> obj[h] = (r[i]||"").trim());
+    // numérico
+    const nq = parseFloat((obj['Net Quantity']||"").replace(/,/g,""));
+    obj._netQty = isNaN(nq) ? 0 : nq;
+    return obj;
+  }).filter(o=>o['Settlement Instruction ID'] || o['State']);
+
+  const totalRaw = data.length;
+
+  // Paso 4 — PAYOUT * -1
+  data.forEach(o=>{
+    if((o['Asset Direction']||"").toUpperCase()==='PAYOUT' && o._netQty>0){
+      o._netQty = -o._netQty;
+    }
+  });
+
+  // Paso 5 — filtrar CLOSED / POOLED
+  const pend = data.filter(o=>{
+    const st = (o['State']||"").toUpperCase();
+    return st!=='CLOSED' && st!=='POOLED';
+  });
+  // Asignar id estable a cada fila pendiente (necesario para eliminar)
+  pend.forEach((o,i)=> o._id = i);
+
+  // Estado global mutable
+  window.__state = {
+    sourceLabel, totalRaw,
+    pend,                  // filas vivas
+    eliminadas: [],        // pila de eliminadas para "deshacer"
+  };
+
+  recalcularYRender();
+}
+
+/* =========================================================================
+   RECÁLCULO  (se llama después de cada eliminación / deshacer)
+   ========================================================================= */
+function recalcularYRender(){
+  const s = window.__state;
+  if(!s) return;
+  const pend = s.pend;
+
+  // Paso 6 — pivot Reason × Asset (solo con filas vivas)
+  const reasons = [...new Set(pend.map(o=>o['Reason']||'(sin Reason)'))].sort();
+  const assets  = [...new Set(pend.map(o=>o['Asset']||'(sin Asset)'))].sort();
+  const pivot = {};
+  reasons.forEach(r=>{ pivot[r]={}; assets.forEach(a=>pivot[r][a]=0); });
+  pend.forEach(o=>{
+    const r = o['Reason']||'(sin Reason)';
+    const a = o['Asset']||'(sin Asset)';
+    pivot[r][a] += o._netQty;
+  });
+
+  render({
+    sourceLabel: s.sourceLabel,
+    totalRaw: s.totalRaw,
+    pend, reasons, assets, pivot,
+    eliminadas: s.eliminadas
+  });
+}
+
+/* =========================================================================
+   RENDER
+   ========================================================================= */
+function render(ctx){
+  const root = document.getElementById('content');
+  document.getElementById('meta-now').textContent = new Date().toLocaleString('es-AR');
+  if(ctx.error){
+    root.innerHTML = `<div class="empty" style="color:var(--accent);border-color:var(--accent)">${ctx.error}</div>`;
+    return;
+  }
+  document.getElementById('meta-src').textContent  = ctx.sourceLabel || '—';
+  document.getElementById('meta-raw').textContent  = fmtInt.format(ctx.totalRaw);
+  document.getElementById('meta-pend').textContent = fmtInt.format(ctx.pend.length);
+
+  // KPIs
+  const byState = {};
+  ctx.pend.forEach(o=>{ const s=o['State']||'?'; byState[s]=(byState[s]||0)+1; });
+  const totByReason = {};
+  ctx.reasons.forEach(r=>{
+    totByReason[r] = ctx.assets.reduce((s,a)=>s+ctx.pivot[r][a],0);
+  });
+  const reasonTop = ctx.reasons.map(r=>[r,totByReason[r]])
+    .sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]))[0];
+  const grandTotal = ctx.reasons.reduce((s,r)=>s+totByReason[r],0);
+
+  const kpisHTML = `
+    <div class="kpis">
+      <div class="kpi">
+        <div class="k-label">Operaciones pendientes</div>
+        <div class="k-value">${fmtInt.format(ctx.pend.length)}</div>
+        <div class="k-sub">de ${fmtInt.format(ctx.totalRaw)} totales · ${ctx.totalRaw>0?Math.round(100*ctx.pend.length/ctx.totalRaw):0}%</div>
+      </div>
+      <div class="kpi">
+        <div class="k-label">Reasons activos</div>
+        <div class="k-value">${ctx.reasons.length}</div>
+        <div class="k-sub">${ctx.reasons.map(r=>r.replace(/_/g,' ').toLowerCase()).join(' · ')||'—'}</div>
+      </div>
+      <div class="kpi">
+        <div class="k-label">Reason de mayor exposición</div>
+        <div class="k-value" style="font-size:22px">${reasonTop?reasonTop[0]:'—'}</div>
+        <div class="k-sub">Σ Net Qty · ${reasonTop?fnum(reasonTop[1]):'0,00'}</div>
+      </div>
+      <div class="kpi">
+        <div class="k-label">Σ Net Quantity (total)</div>
+        <div class="k-value" style="color:${grandTotal<0?'#ffffff':'var(--accent)'}">${fnum(grandTotal)}</div>
+        <div class="k-sub">PENDING_SETTLEMENT ${byState['PENDING_SETTLEMENT']||0} · PENDING_MANUAL ${byState['PENDING_MANUAL']||0}</div>
+      </div>
+    </div>`;
+
+  // Pivot HTML
+  let pivotHTML = `
+    <div class="section-head">
+      <span class="num">§ 01</span>
+      <h2>Tabla dinámica · Net Quantity por Reason × Asset</h2>
+      <span class="hint">filas = reason · columnas = asset · ∑ net quantity</span>
+    </div>
+    <div class="pivot-wrap">
+      <table class="pivot">
+        <thead><tr>
+          <th>Reason \\ Asset</th>
+          ${ctx.assets.map(a=>`<th>${escapeHTML(a)}</th>`).join('')}
+          <th style="background:#040d24;color:var(--accent)">Total general</th>
+        </tr></thead>
+        <tbody>`;
+  ctx.reasons.forEach(r=>{
+    let rowTotal = 0;
+    pivotHTML += `<tr><td>${escapeHTML(r)}</td>`;
+    ctx.assets.forEach(a=>{
+      const v = ctx.pivot[r][a];
+      rowTotal += v;
+      pivotHTML += fnumCell(v);
+    });
+    pivotHTML += fnumCell(rowTotal).replace('<td','<td style="font-weight:700;background:#15306a;color:#fff"');
+    pivotHTML += `</tr>`;
+  });
+
+  // total general
+  pivotHTML += `<tr class="total"><td>Total general</td>`;
+  let gtot = 0;
+  ctx.assets.forEach(a=>{
+    const colTot = ctx.reasons.reduce((s,r)=>s+ctx.pivot[r][a],0);
+    gtot += colTot;
+    pivotHTML += `<td>${fnum(colTot)}</td>`;
+  });
+  pivotHTML += `<td>${fnum(gtot)}</td></tr>`;
+  pivotHTML += `</tbody></table></div>`;
+
+  // Detalle
+  const elimCount = (ctx.eliminadas||[]).length;
+  let detailHTML = `
+    <div class="section-head">
+      <span class="num">§ 02</span>
+      <h2>Detalle · líneas pendientes</h2>
+      <span class="hint">${ctx.pend.length} activas${elimCount?` · <span class="elim-badge">${elimCount} eliminadas</span>`:''}</span>
+    </div>
+    <div class="filters">
+      <label>State <select id="f-state"><option value="">— todos —</option>${[...new Set(ctx.pend.map(o=>o['State']))].map(s=>`<option>${s}</option>`).join('')}</select></label>
+      <label>Reason <select id="f-reason"><option value="">— todos —</option>${ctx.reasons.map(s=>`<option>${escapeHTML(s)}</option>`).join('')}</select></label>
+      <label>Direction <select id="f-dir"><option value="">— todos —</option><option>PAYIN</option><option>PAYOUT</option></select></label>
+      <label>Buscar <input id="f-q" placeholder="ID, Asset, Account…"></label>
+      <button class="btn ghost" style="padding:5px 10px;font-size:11px" onclick="exportarCSV()">↓ Exportar pendientes</button>
+      ${elimCount?`<button class="btn ghost" style="padding:5px 10px;font-size:11px" onclick="deshacerEliminacion()">↶ Deshacer última (${elimCount})</button>
+      <button class="btn ghost" style="padding:5px 10px;font-size:11px" onclick="restablecerTodo()">⟲ Restablecer todo</button>`:''}
+    </div>
+    <div class="detail-wrap">
+      <table class="detail" id="tbl-detail">
+        <thead><tr>
+          <th>Settlement ID</th>
+          <th>State</th>
+          <th>Dir</th>
+          <th>Asset</th>
+          <th class="num">Net Qty</th>
+          <th>Reason</th>
+          <th>Settle Date</th>
+          <th>Plus Account</th>
+          <th>External ID</th>
+          <th class="action-col">Acción</th>
+        </tr></thead>
+        <tbody>${ctx.pend.map(rowDetailHTML).join('')}</tbody>
+      </table>
+    </div>`;
+
+  root.innerHTML = kpisHTML + pivotHTML + detailHTML;
+
+  // Filtros
+  ['f-state','f-reason','f-dir','f-q'].forEach(id=>{
+    document.getElementById(id).addEventListener('input',aplicarFiltros);
+  });
+  // guardar para export
+  window.__pend = ctx.pend;
+}
+
+function rowDetailHTML(o){
+  const dir = (o['Asset Direction']||'').toUpperCase();
+  const dirCls = dir==='PAYIN'?'payin':'payout';
+  const st = (o['State']||'');
+  const stCls = st==='PENDING_MANUAL'?'state-pm':'state-ps';
+  const qtyCls = o._netQty<0?'neg':(o._netQty>0?'pos':'');
+  return `<tr data-id="${o._id}" data-state="${escapeAttr(st)}" data-reason="${escapeAttr(o['Reason']||'')}" data-dir="${dir}">
+    <td>${escapeHTML(o['Settlement Instruction ID']||'')}</td>
+    <td><span class="pill ${stCls}">${escapeHTML(st)}</span></td>
+    <td><span class="pill ${dirCls}">${dir}</span></td>
+    <td>${escapeHTML(o['Asset']||'')}</td>
+    <td class="num ${qtyCls}">${fnum(o._netQty)}</td>
+    <td class="reason-c">${escapeHTML(o['Reason']||'')}</td>
+    <td>${escapeHTML(o['Settlement Date']||'')}</td>
+    <td>${escapeHTML(o['Plus Account']||o['Minus Account']||'')}</td>
+    <td>${escapeHTML(o['External Instruction ID']||'')}</td>
+    <td class="action-col"><button class="btn-del" onclick="eliminarFila(${o._id})" title="Eliminar fila y recalcular">✕</button></td>
+  </tr>`;
+}
+
+function aplicarFiltros(){
+  const s = document.getElementById('f-state').value;
+  const r = document.getElementById('f-reason').value;
+  const d = document.getElementById('f-dir').value;
+  const q = document.getElementById('f-q').value.toLowerCase();
+  document.querySelectorAll('#tbl-detail tbody tr').forEach(tr=>{
+    let ok = true;
+    if(s && tr.dataset.state!==s) ok=false;
+    if(r && tr.dataset.reason!==r) ok=false;
+    if(d && tr.dataset.dir!==d) ok=false;
+    if(q && tr.textContent.toLowerCase().indexOf(q)<0) ok=false;
+    tr.style.display = ok?'':'none';
+  });
+}
+
+function exportarCSV(){
+  if(!window.__pend) return;
+  const cols = ['Settlement Instruction ID','State','Asset Direction','Asset','Net Quantity','Reason','Settlement Date','Plus Account','Minus Account','External Instruction ID'];
+  const lines = [cols.join(';')];
+  window.__pend.forEach(o=>{
+    const row = cols.map(c=>{
+      let v = c==='Net Quantity' ? String(o._netQty).replace('.',',') : (o[c]||'');
+      if(/[;"\n]/.test(v)) v = '"'+v.replace(/"/g,'""')+'"';
+      return v;
+    });
+    lines.push(row.join(';'));
+  });
+  const blob = new Blob(["\uFEFF"+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'pendientes_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* =========================================================================
+   EDICIÓN: eliminar / deshacer / restablecer
+   ========================================================================= */
+function eliminarFila(id){
+  const s = window.__state; if(!s) return;
+  const i = s.pend.findIndex(o=>o._id===id);
+  if(i<0) return;
+  const tr = document.querySelector(`#tbl-detail tbody tr[data-id="${id}"]`);
+  if(tr){
+    tr.classList.add('fade-out');
+    setTimeout(()=>{
+      const [removed] = s.pend.splice(i,1);
+      s.eliminadas.push(removed);
+      recalcularYRender();
+    }, 160);
+  } else {
+    const [removed] = s.pend.splice(i,1);
+    s.eliminadas.push(removed);
+    recalcularYRender();
+  }
+}
+
+function deshacerEliminacion(){
+  const s = window.__state; if(!s || !s.eliminadas.length) return;
+  const last = s.eliminadas.pop();
+  // reinsertar manteniendo el orden por _id
+  const at = s.pend.findIndex(o=>o._id>last._id);
+  if(at<0) s.pend.push(last); else s.pend.splice(at,0,last);
+  recalcularYRender();
+}
+
+function restablecerTodo(){
+  const s = window.__state; if(!s || !s.eliminadas.length) return;
+  if(!confirm(`Reincorporar las ${s.eliminadas.length} filas eliminadas?`)) return;
+  s.pend = s.pend.concat(s.eliminadas).sort((a,b)=>a._id-b._id);
+  s.eliminadas = [];
+  recalcularYRender();
+}
+
+function escapeHTML(s){return String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function escapeAttr(s){return String(s??'').replace(/"/g,'&quot;');}
+
+/* =========================================================================
+   ENTRADA: archivo / drag & drop / portapapeles
+   ========================================================================= */
+const fileInput = document.getElementById('file');
+fileInput.addEventListener('change',e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => procesar(ev.target.result, f.name);
+  r.readAsText(f,'UTF-8');
+});
+
+const dz = document.getElementById('dropzone');
+['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag');}));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('drag');}));
+dz.addEventListener('drop',e=>{
+  const f = e.dataTransfer.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => procesar(ev.target.result, f.name);
+  r.readAsText(f,'UTF-8');
+});
+
+async function cargarPortapapeles(){
+  try{
+    const t = await navigator.clipboard.readText();
+    if(!t || !t.trim()){ alert('No hay texto en el portapapeles.'); return; }
+    procesar(t,'(portapapeles)');
+  }catch(err){
+    alert('No se pudo acceder al portapapeles. Probá con la opción de archivo.');
+  }
+}
+
+document.getElementById('meta-now').textContent = new Date().toLocaleString('es-AR');
+
+// Atajo: Ctrl/Cmd+Z deshace la última eliminación (si hay)
+document.addEventListener('keydown',e=>{
+  const tag = (e.target.tagName||'').toLowerCase();
+  if(tag==='input' || tag==='textarea' || tag==='select') return;
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='z' && !e.shiftKey){
+    if(window.__state && window.__state.eliminadas.length){
+      e.preventDefault();
+      deshacerEliminacion();
+    }
+  }
+});
+</script>
+</body>
+</html>
